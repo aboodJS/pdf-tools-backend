@@ -1,10 +1,10 @@
 import express, { urlencoded } from "express";
 import cors from "cors";
 import multer from "multer";
-import fs from "fs";
+import { execFile } from "node:child_process";
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function async(req, file, cb) {
     cb(null, "./upload");
   },
   filename: function (req, file, cb) {
@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ dest: "upload/", storage: storage });
+const upload = multer({ storage: storage });
 
 const app = express();
 const PORT = 3000;
@@ -21,17 +21,12 @@ app.use(urlencoded());
 
 app.post("/convert", upload.array("images", 20), async (req, res) => {
   try {
-    const data = fs.readdirSync("./upload", { withFileTypes: true });
-    console.log(data);
-    await fs.rm("./upload", { recursive: true, force: true }, (err) => {
-      if (err) {
-        throw err;
-      }
-      console.log("operation complete");
+    const files = req.files.map((e) => {
+      return `./upload/${e.filename}`;
     });
-    res.json({
-      message: "Conversion received",
-    });
+
+    execFile("img2pdf", [...files, "--output", "./src/out.pdf"]);
+    res.download("./out.pdf");
   } catch (error) {
     res.status(500).json(error);
   }
