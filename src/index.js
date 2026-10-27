@@ -26,7 +26,16 @@ app.post("/convert", upload.array("images", 20), async (req, res) => {
     });
 
     execFile("img2pdf", [...files, "--output", "./src/out.pdf"]);
-    res.download("./out.pdf");
+    res.download("./src/out.pdf");
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
+app.post("/word-to-pdf", upload.single("document"), async (req, res) => {
+  try {
+    execFile("libre", [req.file, "-o", `../upload/${req.file.originalname}`]);
+    res.download(`./src/${req.file.originalname.split(".")[0]}.pdf`);
   } catch (error) {
     res.status(500).json(error);
   }
