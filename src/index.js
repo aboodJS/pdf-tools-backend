@@ -33,10 +33,28 @@ app.post("/convert", upload.array("images", 20), async (req, res) => {
 });
 
 app.post("/word-to-pdf", upload.single("document"), async (req, res) => {
+  console.log(req.file);
   try {
-    execFile("libre", [req.file, "-o", `../upload/${req.file.originalname}`]);
+    await execFile(
+      "libreoffice",
+      [
+        "--headless",
+        "--convert-to",
+        "pdf",
+        "--outdir",
+        ".",
+        `../upload/${req.file.originalname}`,
+      ],
+      (error, stdout, stderr) => {
+        if (error) {
+          console.log(error);
+          return error;
+        }
+      },
+    );
     res.download(`./src/${req.file.originalname.split(".")[0]}.pdf`);
   } catch (error) {
+    console.log(error);
     res.status(500).json(error);
   }
 });
